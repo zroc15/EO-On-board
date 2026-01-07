@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { engineerApi } from '../services/api';
+import { storageService } from '../services/localStorage';
 import { Engineer, SKILL_OPTIONS, ComplexityLevel } from '../types';
 
 export default function EngineerManagement() {
@@ -21,11 +21,11 @@ export default function EngineerManagement() {
     loadEngineers();
   }, []);
 
-  const loadEngineers = async () => {
+  const loadEngineers = () => {
     try {
       setLoading(true);
-      const response = await engineerApi.getAll();
-      setEngineers(response.data);
+      const data = storageService.getAllEngineers();
+      setEngineers(data);
     } catch (error) {
       console.error('Failed to load engineers:', error);
     } finally {
@@ -33,18 +33,15 @@ export default function EngineerManagement() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      if (editingEngineer) {
-        await engineerApi.update(editingEngineer.id, formData);
-      } else {
-        await engineerApi.create(formData);
-      }
-      await loadEngineers();
+      // Note: Engineer CRUD will be added to storageService
+      // For now, just show the form works
+      alert('Engineer management will be available in the next update');
+      loadEngineers();
       resetForm();
-      alert(editingEngineer ? 'Engineer updated successfully' : 'Engineer created successfully');
     } catch (error) {
       console.error('Failed to save engineer:', error);
       alert('Failed to save engineer');

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { onboardingApi } from '../services/api';
+import { storageService } from '../services/localStorage';
 import { OnboardingRecord, STATUS_LABELS, STATUS_COLORS } from '../types';
 
 export default function Dashboard() {
@@ -12,13 +12,13 @@ export default function Dashboard() {
     loadRecords();
   }, [statusFilter]);
 
-  const loadRecords = async () => {
+  const loadRecords = () => {
     try {
       setLoading(true);
-      const response = await onboardingApi.getAll(
+      const data = storageService.getAllOnboarding(
         statusFilter ? { status: statusFilter } : undefined
       );
-      setRecords(response.data);
+      setRecords(data);
     } catch (error) {
       console.error('Failed to load records:', error);
     } finally {

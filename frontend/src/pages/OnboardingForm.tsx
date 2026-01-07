@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { onboardingApi } from '../services/api';
+import { storageService } from '../services/localStorage';
 import {
   OnboardingRecord,
   Stakeholders,
@@ -34,13 +34,13 @@ export default function OnboardingForm() {
     }
   }, [id]);
 
-  const loadRecord = async () => {
+  const loadRecord = () => {
     if (!id) return;
 
     try {
       setLoading(true);
-      const response = await onboardingApi.getById(id);
-      setRecord(response.data);
+      const data = storageService.getOnboardingById(id);
+      setRecord(data);
     } catch (error) {
       console.error('Failed to load record:', error);
       alert('Failed to load onboarding record');
@@ -49,11 +49,11 @@ export default function OnboardingForm() {
     }
   };
 
-  const handleCreateNew = async (customerName: string) => {
+  const handleCreateNew = (customerName: string) => {
     try {
       setSaving(true);
-      const response = await onboardingApi.create({ customer_name: customerName });
-      navigate(`/onboarding/${response.data.id}`);
+      const newRecord = storageService.createOnboarding({ customer_name: customerName });
+      navigate(`/onboarding/${newRecord.id}`);
     } catch (error) {
       console.error('Failed to create record:', error);
       alert('Failed to create onboarding record');
@@ -61,106 +61,106 @@ export default function OnboardingForm() {
     }
   };
 
-  const handleSaveStakeholders = async (data: Stakeholders) => {
+  const handleSaveStakeholders = (data: Stakeholders) => {
     if (!id) return;
     try {
       setSaving(true);
-      await onboardingApi.updateStakeholders(id, data);
-      await loadRecord();
+      storageService.updateStakeholders(id, data);
+      loadRecord();
       alert('Stakeholders saved successfully');
     } catch (error: any) {
       console.error('Failed to save stakeholders:', error);
-      alert(error.response?.data?.error || 'Failed to save stakeholders');
+      alert(error.message || 'Failed to save stakeholders');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleSaveCommercial = async (data: CommercialScope) => {
+  const handleSaveCommercial = (data: CommercialScope) => {
     if (!id) return;
     try {
       setSaving(true);
-      await onboardingApi.updateCommercial(id, data);
-      await loadRecord();
+      storageService.updateCommercialScope(id, data);
+      loadRecord();
       alert('Commercial data saved successfully');
     } catch (error: any) {
       console.error('Failed to save commercial data:', error);
-      alert(error.response?.data?.error || 'Failed to save commercial data');
+      alert(error.message || 'Failed to save commercial data');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleSaveTechnical = async (data: TechnicalEnvironment) => {
+  const handleSaveTechnical = (data: TechnicalEnvironment) => {
     if (!id) return;
     try {
       setSaving(true);
-      await onboardingApi.updateTechnical(id, data);
-      await loadRecord();
+      storageService.updateTechnicalEnvironment(id, data);
+      loadRecord();
       alert('Technical environment saved successfully');
     } catch (error: any) {
       console.error('Failed to save technical environment:', error);
-      alert(error.response?.data?.error || 'Failed to save technical environment');
+      alert(error.message || 'Failed to save technical environment');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleSaveAdministrative = async (data: AdministrativeDetails) => {
+  const handleSaveAdministrative = (data: AdministrativeDetails) => {
     if (!id) return;
     try {
       setSaving(true);
-      await onboardingApi.updateAdministrative(id, data);
-      await loadRecord();
+      storageService.updateAdministrativeDetails(id, data);
+      loadRecord();
       alert('Administrative details saved successfully');
     } catch (error: any) {
       console.error('Failed to save administrative details:', error);
-      alert(error.response?.data?.error || 'Failed to save administrative details');
+      alert(error.message || 'Failed to save administrative details');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleSaveComplexity = async (level: ComplexityLevel) => {
+  const handleSaveComplexity = (level: ComplexityLevel) => {
     if (!id) return;
     try {
       setSaving(true);
-      await onboardingApi.updateComplexity(id, level);
-      await loadRecord();
+      storageService.updateComplexity(id, level);
+      loadRecord();
       alert('Complexity level saved successfully');
     } catch (error: any) {
       console.error('Failed to save complexity level:', error);
-      alert(error.response?.data?.error || 'Failed to save complexity level');
+      alert(error.message || 'Failed to save complexity level');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleAssignEngineer = async (engineerId: string, role: 'primary' | 'secondary') => {
+  const handleAssignEngineer = (engineerId: string, role: 'primary' | 'secondary') => {
     if (!id) return;
     try {
       setSaving(true);
-      await onboardingApi.assignEngineer(id, engineerId, role);
-      await loadRecord();
+      storageService.assignEngineer(id, engineerId, role);
+      loadRecord();
       alert('Engineer assigned successfully');
     } catch (error: any) {
       console.error('Failed to assign engineer:', error);
-      alert(error.response?.data?.error || 'Failed to assign engineer');
+      alert(error.message || 'Failed to assign engineer');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleStatusChange = async (newStatus: string, notes?: string) => {
+  const handleStatusChange = (newStatus: string) => {
     if (!id) return;
     try {
       setSaving(true);
-      await onboardingApi.updateStatus(id, newStatus as any, undefined, notes);
-      await loadRecord();
+      storageService.updateOnboardingStatus(id, newStatus as any);
+      loadRecord();
       alert('Status updated successfully');
     } catch (error: any) {
       console.error('Failed to update status:', error);
-      alert(error.response?.data?.error || 'Failed to update status');
+      alert(error.message || 'Failed to update status');
     } finally {
       setSaving(false);
     }

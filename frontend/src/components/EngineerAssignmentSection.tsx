@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { engineerApi } from '../services/api';
+import { storageService } from '../services/localStorage';
 import { Engineer, EngineerAssignment, ComplexityLevel } from '../types';
 
 interface Props {
@@ -28,11 +28,11 @@ export default function EngineerAssignmentSection({
     }
   }, [complexityLevel, onboardingId]);
 
-  const loadEligibleEngineers = async () => {
+  const loadEligibleEngineers = () => {
     try {
       setLoading(true);
-      const response = await engineerApi.getEligible(onboardingId);
-      setEligibleEngineers(response.data);
+      const engineers = storageService.getEligibleEngineers(onboardingId);
+      setEligibleEngineers(engineers);
     } catch (error) {
       console.error('Failed to load eligible engineers:', error);
     } finally {

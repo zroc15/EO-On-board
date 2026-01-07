@@ -12,6 +12,24 @@ export type DeploymentType = 'POC' | 'Production';
 
 export type CustomerBandwidth = 'Low' | 'Medium' | 'High';
 
+export type UserRole =
+  | 'director'
+  | 'senior_director'
+  | 'manager'
+  | 'solutions_architect'
+  | 'account_rep'
+  | 'lead_solutions_engineer'
+  | 'solutions_engineer'
+  | 'delivery_engineer';
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  is_active: boolean;
+}
+
 export interface OnboardingRecord {
   id: string;
   customer_name: string;
@@ -90,6 +108,8 @@ export interface Engineer {
   is_available: boolean;
   primary_timezone?: string;
   current_projects_count: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface EngineerAssignment {
