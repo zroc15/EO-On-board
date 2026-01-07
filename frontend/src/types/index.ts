@@ -8,7 +8,7 @@ export type OnboardingStatus =
 
 export type ComplexityLevel = 'L1' | 'L2' | 'L3' | 'L4';
 
-export type DeploymentType = 'POC' | 'Production';
+export type DeploymentType = 'POC' | 'Greenfield' | 'Optimize' | 'ProServ';
 
 export type CustomerBandwidth = 'Low' | 'Medium' | 'High';
 
@@ -51,7 +51,6 @@ export interface OnboardingRecord {
 export interface Stakeholders {
   eliteops_account_rep?: string;
   eliteops_solutions_architect: string;
-  eliteops_engineering_lead?: string;
   zscaler_account_rep?: string;
   zscaler_se?: string;
   customer_primary_name: string;
@@ -67,9 +66,9 @@ export interface CommercialScope {
   contract_start_date?: string;
   deployment_type?: DeploymentType;
   term_length?: number;
-  sow_created: boolean;
-  sow_approved: boolean;
-  sow_document_url?: string;
+  sow_file_name?: string;
+  sow_file_data?: string; // base64 encoded file
+  sow_uploaded_at?: string;
 }
 
 export interface TechnicalEnvironment {
