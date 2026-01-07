@@ -243,7 +243,7 @@ export default function OnboardingForm() {
 
   const tabs = [
     { id: 'stakeholders', name: 'Stakeholders', required: true },
-    { id: 'commercial', name: 'Commercial & Scope', required: true },
+    { id: 'commercial', name: 'Scope', required: true },
     { id: 'technical', name: 'Technical Environment', required: true },
     { id: 'administrative', name: 'Administrative', required: true },
     { id: 'complexity', name: 'Complexity', required: true },
