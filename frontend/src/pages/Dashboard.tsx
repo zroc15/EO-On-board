@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { onboardingApi } from '../services/api';
-import { OnboardingRecord, STATUS_LABELS, STATUS_COLORS, OnboardingStatus } from '../types';
+import { OnboardingRecord, STATUS_LABELS, STATUS_COLORS } from '../types';
 
 export default function Dashboard() {
   const [records, setRecords] = useState<OnboardingRecord[]>([]);

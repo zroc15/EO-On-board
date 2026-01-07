@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { onboardingApi, engineerApi } from '../services/api';
+import { onboardingApi } from '../services/api';
 import {
   OnboardingRecord,
   Stakeholders,
   CommercialScope,
   TechnicalEnvironment,
   AdministrativeDetails,
-  PRODUCT_OPTIONS,
   ComplexityLevel,
-  Engineer,
   STATUS_LABELS,
   STATUS_COLORS
 } from '../types';
