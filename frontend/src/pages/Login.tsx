@@ -41,67 +41,135 @@ export default function Login({ onLogin }: LoginProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 px-4">
-      <div className="max-w-md w-full">
-        <div className="bg-white shadow-2xl rounded-2xl p-8">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+      {/* Animated background */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -inset-[10px] opacity-50">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-500/30 rounded-full blur-3xl animate-pulse-slow"></div>
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary-600/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1s' }}></div>
+        </div>
+
+        {/* Grid overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,164,239,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,164,239,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
+      </div>
+
+      <div className="relative z-10 max-w-md w-full mx-4">
+        {/* Glass card */}
+        <div className="glass-panel rounded-3xl p-8 backdrop-blur-2xl border-primary-500/20">
           <div className="text-center mb-8">
-            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-primary-600 mb-4">
-              <svg className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
+            {/* Logo */}
+            <div className="mx-auto mb-6 relative">
+              <div className="absolute inset-0 bg-primary-500/20 blur-2xl rounded-full"></div>
+              <div className="relative bg-gradient-to-br from-white to-primary-50 rounded-2xl p-6 shadow-glow">
+                <svg className="h-16 w-auto mx-auto" viewBox="0 0 400 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <text x="50" y="70" fontFamily="Arial, sans-serif" fontSize="60" fontWeight="bold" fill="#00a4ef">eliteops</text>
+                  <circle cx="20" cy="50" r="15" fill="#00a4ef" opacity="0.3"/>
+                  <circle cx="20" cy="50" r="10" fill="#00a4ef" opacity="0.5"/>
+                  <circle cx="20" cy="50" r="5" fill="#00a4ef"/>
+                </svg>
+              </div>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900">EliteOps</h2>
-            <p className="mt-2 text-sm text-gray-600">Customer Onboarding Platform</p>
+
+            <h2 className="text-3xl font-bold text-white mb-2">
+              Welcome Back
+            </h2>
+            <p className="text-primary-200 text-sm">
+              Customer Onboarding Platform
+            </p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
-              <label htmlFor="user" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="user" className="block text-sm font-medium text-primary-100 mb-3">
                 Select Your Account
               </label>
-              <select
-                id="user"
-                value={selectedEmail}
-                onChange={(e) => setSelectedEmail(e.target.value)}
-                required
-                className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm py-3 px-4"
-              >
-                <option value="">Choose your role...</option>
+              <div className="relative">
+                <select
+                  id="user"
+                  value={selectedEmail}
+                  onChange={(e) => setSelectedEmail(e.target.value)}
+                  required
+                  className="block w-full rounded-xl bg-white/10 border-2 border-primary-500/30 text-white shadow-inner-glow focus:border-primary-500 focus:ring-4 focus:ring-primary-500/20 text-sm py-3 px-4 transition-all duration-300 hover:border-primary-400/50 backdrop-blur-sm"
+                >
+                  <option value="" className="bg-dark-900 text-gray-300">Choose your role...</option>
 
-                {Object.entries(groupedUsers).map(([role, roleUsers]) => (
-                  <optgroup key={role} label={roleLabels[role] || role}>
-                    {roleUsers.map((user) => (
-                      <option key={user.id} value={user.email}>
-                        {user.name} ({user.email})
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
+                  {Object.entries(groupedUsers).map(([role, roleUsers]) => (
+                    <optgroup key={role} label={roleLabels[role] || role} className="bg-dark-900">
+                      {roleUsers.map((user) => (
+                        <option key={user.id} value={user.email} className="bg-dark-900 text-white py-2">
+                          {user.name} ({user.email})
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">
+                  <svg className="h-5 w-5 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={!selectedEmail}
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="group relative w-full flex justify-center py-3.5 px-4 border-2 border-transparent rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-600 focus:outline-none focus:ring-4 focus:ring-primary-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-glow hover:shadow-glow-lg transform hover:scale-[1.02] active:scale-95"
             >
+              <span className="absolute left-0 inset-y-0 flex items-center pl-4">
+                <svg className="h-5 w-5 text-primary-200 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </span>
               Sign In
+              <span className="absolute right-0 inset-y-0 flex items-center pr-4">
+                <svg className="h-5 w-5 text-primary-200 group-hover:text-white group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </span>
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <div className="text-xs text-gray-500 space-y-2">
-              <p className="font-semibold text-gray-700 mb-2">Demo Accounts Available:</p>
-              <p><span className="font-medium">Leadership:</span> Director, Manager</p>
-              <p><span className="font-medium">Sales:</span> Solutions Architect, Account Rep</p>
-              <p><span className="font-medium">Engineering:</span> Lead SE, SE, Delivery Engineer</p>
+          <div className="mt-8 pt-6 border-t border-primary-500/20">
+            <div className="text-xs text-primary-200/80 space-y-3">
+              <p className="font-semibold text-primary-100 mb-3 flex items-center">
+                <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Demo Accounts Available:
+              </p>
+              <div className="grid grid-cols-1 gap-2 text-primary-200/70">
+                <div className="flex items-start">
+                  <span className="inline-block w-2 h-2 rounded-full bg-primary-500 mt-1.5 mr-2"></span>
+                  <div>
+                    <span className="font-medium text-primary-100">Leadership:</span> Director, Manager, Senior Director
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <span className="inline-block w-2 h-2 rounded-full bg-primary-500 mt-1.5 mr-2"></span>
+                  <div>
+                    <span className="font-medium text-primary-100">Sales:</span> Solutions Architect, Account Rep
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <span className="inline-block w-2 h-2 rounded-full bg-primary-500 mt-1.5 mr-2"></span>
+                  <div>
+                    <span className="font-medium text-primary-100">Engineering:</span> Lead SE, Solutions Engineer, Delivery
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <p className="mt-6 text-center text-xs text-gray-600">
-          Demo Version - All data stored locally in browser
-        </p>
+        <div className="mt-6 text-center">
+          <p className="text-xs text-primary-300/60 flex items-center justify-center">
+            <svg className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            Secure Demo - Data stored locally in your browser
+          </p>
+        </div>
       </div>
     </div>
   );
