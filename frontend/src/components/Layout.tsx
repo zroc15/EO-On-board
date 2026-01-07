@@ -25,6 +25,7 @@ export default function Layout({ children, currentUser, onLogout }: LayoutProps)
   };
 
   const unreadNotifications = storageService.getNotifications(currentUser.email).filter(n => !n.read).length;
+  const isLeadership = ['director', 'senior_director', 'manager'].includes(currentUser.role);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -48,6 +49,18 @@ export default function Layout({ children, currentUser, onLogout }: LayoutProps)
                 >
                   Dashboard
                 </Link>
+                {isLeadership && (
+                  <Link
+                    to="/leadership"
+                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                      isActive('/leadership')
+                        ? 'border-primary-500 text-gray-900'
+                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                    }`}
+                  >
+                    Leadership Review
+                  </Link>
+                )}
                 <Link
                   to="/engineers"
                   className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${

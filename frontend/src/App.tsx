@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import OnboardingForm from './pages/OnboardingForm';
 import EngineerManagement from './pages/EngineerManagement';
+import LeadershipDashboard from './pages/LeadershipDashboard';
 import Login from './pages/Login';
 import { storageService } from './services/localStorage';
 import { User } from './types';
@@ -47,6 +48,7 @@ function App() {
         <Route path="/onboarding/new" element={<OnboardingForm />} />
         <Route path="/onboarding/:id" element={<OnboardingForm />} />
         <Route path="/engineers" element={<EngineerManagement />} />
+        <Route path="/leadership" element={<LeadershipDashboard />} />
       </Routes>
     </Layout>
   );
