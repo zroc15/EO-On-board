@@ -20,8 +20,17 @@ export const canEditRecord = (user: User | null, recordStatus: OnboardingStatus)
   // Leaders can always edit
   if (isLeadership(user.role)) return true;
 
-  // Non-leaders can only edit in draft status
-  return recordStatus === 'draft';
+  // ONLY SALES can edit in draft status (engineers cannot edit!)
+  if (isSales(user.role) && recordStatus === 'draft') return true;
+
+  // Engineers cannot edit records at all
+  return false;
+};
+
+export const canCreateCustomer = (user: User | null): boolean => {
+  if (!user) return false;
+  // Only sales and leaders can create new customers
+  return isLeadership(user.role) || isSales(user.role);
 };
 
 export const canAssignEngineers = (user: User | null): boolean => {
@@ -31,8 +40,8 @@ export const canAssignEngineers = (user: User | null): boolean => {
 
 export const canSubmitToLeadership = (user: User | null): boolean => {
   if (!user) return false;
-  // Sales and Engineers can submit to leadership
-  return isSales(user.role) || isEngineer(user.role);
+  // Only Sales can submit to leadership (engineers don't fill out forms!)
+  return isSales(user.role);
 };
 
 export const canApproveRecord = (user: User | null): boolean => {
@@ -121,10 +130,10 @@ export const canTransitionToStatus = (
 ): { allowed: boolean; reason?: string } => {
   if (!user) return { allowed: false, reason: 'No user logged in' };
 
-  // Draft -> SA Complete: Sales/Engineers can do this if all fields are complete
+  // Draft -> SA Complete: Only Sales can do this if all fields are complete
   if (currentStatus === 'draft' && targetStatus === 'sa_complete') {
     if (!canSubmitToLeadership(user)) {
-      return { allowed: false, reason: 'Only Sales and Engineers can submit to leadership' };
+      return { allowed: false, reason: 'Only Sales can submit to leadership' };
     }
 
     const validation = validateRequiredFields(record);

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { storageService } from '../services/localStorage';
 import { OnboardingRecord, STATUS_LABELS, STATUS_COLORS } from '../types';
-import { filterRecordsByRole, isLeadership } from '../utils/permissions';
+import { filterRecordsByRole, isLeadership, canCreateCustomer } from '../utils/permissions';
 
 export default function Dashboard() {
   const [records, setRecords] = useState<OnboardingRecord[]>([]);
@@ -46,6 +46,7 @@ export default function Dashboard() {
   // Records awaiting review (leadership only)
   const awaitingReview = filteredAllRecords.filter(r => r.status === 'sa_complete');
   const showLeadershipTabs = currentUser && isLeadership(currentUser.role);
+  const canCreate = canCreateCustomer(currentUser);
 
   // Determine which records to display based on active tab
   const displayRecords = activeTab === 'review' ? awaitingReview : records;
@@ -60,10 +61,11 @@ export default function Dashboard() {
             Manage customer onboarding records from sales handoff to deployment
           </p>
         </div>
-        <Link
-          to="/onboarding/new"
-          className="group relative inline-flex items-center justify-center px-6 py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-600 shadow-glow hover:shadow-glow-lg transition-all duration-300 transform hover:scale-105 active:scale-95"
-        >
+        {canCreate && (
+          <Link
+            to="/onboarding/new"
+            className="group relative inline-flex items-center justify-center px-6 py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-600 shadow-glow hover:shadow-glow-lg transition-all duration-300 transform hover:scale-105 active:scale-95"
+          >
           <span className="absolute left-0 inset-y-0 flex items-center pl-4">
             <svg className="h-5 w-5 text-primary-100" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -76,6 +78,7 @@ export default function Dashboard() {
             </svg>
           </span>
         </Link>
+        )}
       </div>
 
       {/* Stats Cards */}

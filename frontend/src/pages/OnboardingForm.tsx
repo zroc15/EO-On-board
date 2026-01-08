@@ -19,6 +19,7 @@ import TechnicalSection from '../components/TechnicalSection';
 import AdministrativeSection from '../components/AdministrativeSection';
 import ComplexitySection from '../components/ComplexitySection';
 import EngineerAssignmentSection from '../components/EngineerAssignmentSection';
+import EngineerNotes from '../components/EngineerNotes';
 import StatusTransition from '../components/StatusTransition';
 
 export default function OnboardingForm() {
@@ -255,7 +256,8 @@ export default function OnboardingForm() {
     { id: 'technical', name: 'Technical Environment', required: true },
     { id: 'administrative', name: 'Administrative', required: true },
     { id: 'complexity', name: 'Complexity', required: true },
-    { id: 'engineer', name: 'Engineer Assignment', required: false }
+    { id: 'engineer', name: 'Engineer Assignment', required: false },
+    { id: 'notes', name: 'Notes', required: false }
   ];
 
   // Filter tabs based on permissions - hide Engineer Assignment for non-leaders
@@ -364,6 +366,13 @@ export default function OnboardingForm() {
             assignments={record.engineer_assignments || []}
             onAssign={handleAssignEngineer}
             disabled={!canAssign || saving}
+          />
+        )}
+        {activeTab === 'notes' && currentUser && (
+          <EngineerNotes
+            onboardingId={record.id}
+            currentUserEmail={currentUser.email}
+            currentUserName={currentUser.name}
           />
         )}
       </div>
