@@ -2,11 +2,15 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { storageService } from '../services/localStorage';
 import { OnboardingRecord, STATUS_LABELS, STATUS_COLORS } from '../types';
+import { filterRecordsByRole, isLeadership } from '../utils/permissions';
 
 export default function Dashboard() {
   const [records, setRecords] = useState<OnboardingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'all' | 'review'>('all');
+
+  const currentUser = storageService.getCurrentUser();
 
   useEffect(() => {
     loadRecords();
@@ -15,10 +19,13 @@ export default function Dashboard() {
   const loadRecords = () => {
     try {
       setLoading(true);
-      const data = storageService.getAllOnboarding(
+      const allData = storageService.getAllOnboarding(
         statusFilter ? { status: statusFilter } : undefined
       );
-      setRecords(data);
+
+      // Filter records by role
+      const filteredData = filterRecordsByRole(allData, currentUser);
+      setRecords(filteredData);
     } catch (error) {
       console.error('Failed to load records:', error);
     } finally {
@@ -28,12 +35,20 @@ export default function Dashboard() {
 
   // Calculate stats
   const allRecords = storageService.getAllOnboarding();
+  const filteredAllRecords = filterRecordsByRole(allRecords, currentUser);
   const stats = {
-    total: allRecords.length,
-    pending: allRecords.filter(r => r.status === 'sa_complete').length,
-    inProgress: allRecords.filter(r => ['leadership_approved', 'ready_for_delivery', 'in_deployment'].includes(r.status)).length,
-    completed: allRecords.filter(r => r.status === 'completed').length
+    total: filteredAllRecords.length,
+    pending: filteredAllRecords.filter(r => r.status === 'sa_complete').length,
+    inProgress: filteredAllRecords.filter(r => ['leadership_approved', 'ready_for_delivery', 'in_deployment'].includes(r.status)).length,
+    completed: filteredAllRecords.filter(r => r.status === 'completed').length
   };
+
+  // Records awaiting review (leadership only)
+  const awaitingReview = filteredAllRecords.filter(r => r.status === 'sa_complete');
+  const showLeadershipTabs = currentUser && isLeadership(currentUser.role);
+
+  // Determine which records to display based on active tab
+  const displayRecords = activeTab === 'review' ? awaitingReview : records;
 
   return (
     <div className="space-y-8">
@@ -164,24 +179,67 @@ export default function Dashboard() {
 
       {/* Filter & Table */}
       <div className="glass-card rounded-2xl p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">All Projects</h2>
-          <div className="flex items-center space-x-3">
-            <label className="text-sm font-medium text-gray-700">Filter:</label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-lg border-2 border-primary-200 bg-white px-4 py-2 text-sm font-medium text-gray-900 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/20 transition-all"
-            >
-              <option value="">All Statuses</option>
-              <option value="draft">Draft</option>
-              <option value="sa_complete">SA Complete</option>
-              <option value="leadership_approved">Leadership Approved</option>
-              <option value="ready_for_delivery">Ready for Delivery</option>
-              <option value="in_deployment">In Deployment</option>
-              <option value="completed">Completed</option>
-            </select>
+        {/* Leadership Tabs */}
+        {showLeadershipTabs && (
+          <div className="mb-6 border-b-2 border-primary-100">
+            <nav className="-mb-0.5 flex space-x-6">
+              <button
+                onClick={() => setActiveTab('all')}
+                className={`relative py-3 px-1 font-semibold text-sm transition-all duration-300 ${
+                  activeTab === 'all'
+                    ? 'text-primary-600 border-b-2 border-primary-600'
+                    : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent'
+                }`}
+              >
+                All Projects
+                {activeTab === 'all' && (
+                  <span className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-primary-500 to-primary-600 shadow-glow"></span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('review')}
+                className={`relative py-3 px-1 font-semibold text-sm transition-all duration-300 flex items-center ${
+                  activeTab === 'review'
+                    ? 'text-primary-600 border-b-2 border-primary-600'
+                    : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent'
+                }`}
+              >
+                Waiting for Review
+                {awaitingReview.length > 0 && (
+                  <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-full animate-pulse">
+                    {awaitingReview.length}
+                  </span>
+                )}
+                {activeTab === 'review' && (
+                  <span className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-primary-500 to-primary-600 shadow-glow"></span>
+                )}
+              </button>
+            </nav>
           </div>
+        )}
+
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-900">
+            {activeTab === 'review' ? 'Awaiting Your Review' : 'All Projects'}
+          </h2>
+          {activeTab === 'all' && (
+            <div className="flex items-center space-x-3">
+              <label className="text-sm font-medium text-gray-700">Filter:</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="rounded-lg border-2 border-primary-200 bg-white px-4 py-2 text-sm font-medium text-gray-900 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/20 transition-all"
+              >
+                <option value="">All Statuses</option>
+                <option value="draft">Draft</option>
+                <option value="sa_complete">SA Complete</option>
+                <option value="leadership_approved">Leadership Approved</option>
+                <option value="ready_for_delivery">Ready for Delivery</option>
+                <option value="in_deployment">In Deployment</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+          )}
         </div>
 
         <div className="overflow-hidden rounded-xl border border-primary-100">
@@ -190,18 +248,24 @@ export default function Dashboard() {
               <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent"></div>
               <p className="mt-4 text-gray-500">Loading projects...</p>
             </div>
-          ) : records.length === 0 ? (
+          ) : displayRecords.length === 0 ? (
             <div className="bg-white px-4 py-16 text-center">
               <svg className="mx-auto h-16 w-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <p className="mt-4 text-gray-500">No onboarding records found.</p>
-              <Link
-                to="/onboarding/new"
-                className="mt-4 inline-block text-primary-600 hover:text-primary-700 font-medium"
-              >
-                Create your first onboarding record →
-              </Link>
+              <p className="mt-4 text-gray-500">
+                {activeTab === 'review'
+                  ? 'No records awaiting review.'
+                  : 'No onboarding records found.'}
+              </p>
+              {activeTab === 'all' && (
+                <Link
+                  to="/onboarding/new"
+                  className="mt-4 inline-block text-primary-600 hover:text-primary-700 font-medium"
+                >
+                  Create your first onboarding record →
+                </Link>
+              )}
             </div>
           ) : (
             <table className="min-w-full divide-y divide-gray-200">
@@ -225,15 +289,15 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white">
-                {records.map((record, idx) => (
+                {displayRecords.map((record, idx) => (
                   <tr key={record.id} className="hover:bg-primary-50/30 transition-colors group" style={{ animationDelay: `${idx * 50}ms` }}>
                     <td className="whitespace-nowrap py-4 pl-6 pr-3 text-sm font-semibold text-gray-900">
                       {record.customer_name}
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm">
-                      <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${STATUS_COLORS[record.status]} border border-current/20`}>
+                      <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${STATUS_COLORS[record.status as keyof typeof STATUS_COLORS]} border border-current/20`}>
                         <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-current animate-pulse"></span>
-                        {STATUS_LABELS[record.status]}
+                        {STATUS_LABELS[record.status as keyof typeof STATUS_LABELS]}
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 font-medium">

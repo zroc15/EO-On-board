@@ -11,6 +11,7 @@ import {
   STATUS_LABELS,
   STATUS_COLORS
 } from '../types';
+import { canEditRecord, canAssignEngineers } from '../utils/permissions';
 
 import StakeholdersSection from '../components/StakeholdersSection';
 import CommercialSection from '../components/CommercialSection';
@@ -241,7 +242,14 @@ export default function OnboardingForm() {
     );
   }
 
-  const tabs = [
+  const currentUser = storageService.getCurrentUser();
+
+  // Permission checks
+  const canEdit = canEditRecord(currentUser, record.status);
+  const canAssign = canAssignEngineers(currentUser);
+  const isFormDisabled = !canEdit || record.is_locked || saving;
+
+  const allTabs = [
     { id: 'stakeholders', name: 'Stakeholders', required: true },
     { id: 'commercial', name: 'Scope', required: true },
     { id: 'technical', name: 'Technical Environment', required: true },
@@ -249,6 +257,11 @@ export default function OnboardingForm() {
     { id: 'complexity', name: 'Complexity', required: true },
     { id: 'engineer', name: 'Engineer Assignment', required: false }
   ];
+
+  // Filter tabs based on permissions - hide Engineer Assignment for non-leaders
+  const tabs = canAssign
+    ? allTabs
+    : allTabs.filter(tab => tab.id !== 'engineer');
 
   return (
     <div className="px-4 sm:px-6 lg:px-8">
@@ -284,6 +297,8 @@ export default function OnboardingForm() {
           currentStatus={record.status}
           onStatusChange={handleStatusChange}
           disabled={saving}
+          record={record}
+          currentUser={storageService.getCurrentUser()}
         />
       </div>
 
@@ -311,35 +326,35 @@ export default function OnboardingForm() {
           <StakeholdersSection
             data={record.stakeholders}
             onSave={handleSaveStakeholders}
-            disabled={record.is_locked || saving}
+            disabled={isFormDisabled}
           />
         )}
         {activeTab === 'commercial' && (
           <CommercialSection
             data={record.commercial_scope}
             onSave={handleSaveCommercial}
-            disabled={record.is_locked || saving}
+            disabled={isFormDisabled}
           />
         )}
         {activeTab === 'technical' && (
           <TechnicalSection
             data={record.technical_environment}
             onSave={handleSaveTechnical}
-            disabled={record.is_locked || saving}
+            disabled={isFormDisabled}
           />
         )}
         {activeTab === 'administrative' && (
           <AdministrativeSection
             data={record.administrative_details}
             onSave={handleSaveAdministrative}
-            disabled={record.is_locked || saving}
+            disabled={isFormDisabled}
           />
         )}
         {activeTab === 'complexity' && (
           <ComplexitySection
             complexityLevel={record.complexity_level}
             onSave={handleSaveComplexity}
-            disabled={saving}
+            disabled={isFormDisabled}
           />
         )}
         {activeTab === 'engineer' && (
@@ -348,7 +363,7 @@ export default function OnboardingForm() {
             complexityLevel={record.complexity_level}
             assignments={record.engineer_assignments || []}
             onAssign={handleAssignEngineer}
-            disabled={saving}
+            disabled={!canAssign || saving}
           />
         )}
       </div>

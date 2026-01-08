@@ -1,16 +1,20 @@
 import { useState } from 'react';
-import { OnboardingStatus, STATUS_LABELS } from '../types';
+import { OnboardingStatus, STATUS_LABELS, OnboardingRecord, User } from '../types';
+import { canTransitionToStatus } from '../utils/permissions';
 
 interface Props {
   currentStatus: OnboardingStatus;
   onStatusChange: (newStatus: OnboardingStatus, notes?: string) => void;
   disabled: boolean;
+  record: OnboardingRecord;
+  currentUser: User | null;
 }
 
-export default function StatusTransition({ currentStatus, onStatusChange, disabled }: Props) {
+export default function StatusTransition({ currentStatus, onStatusChange, disabled, record, currentUser }: Props) {
   const [notes, setNotes] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
   const [targetStatus, setTargetStatus] = useState<OnboardingStatus | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const validTransitions: Record<OnboardingStatus, OnboardingStatus[]> = {
     draft: ['sa_complete'],
@@ -24,6 +28,15 @@ export default function StatusTransition({ currentStatus, onStatusChange, disabl
   const availableTransitions = validTransitions[currentStatus] || [];
 
   const handleTransitionClick = (newStatus: OnboardingStatus) => {
+    // Check permissions and validate fields
+    const transitionCheck = canTransitionToStatus(currentUser, currentStatus, newStatus, record);
+
+    if (!transitionCheck.allowed) {
+      setValidationError(transitionCheck.reason || 'This transition is not allowed');
+      return;
+    }
+
+    setValidationError(null);
     setTargetStatus(newStatus);
     setShowConfirm(true);
   };
@@ -104,6 +117,25 @@ export default function StatusTransition({ currentStatus, onStatusChange, disabl
           </button>
         ))}
       </div>
+
+      {/* Validation Error */}
+      {validationError && (
+        <div className="border-l-4 border-red-500 bg-red-50 p-4 rounded">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-semibold text-red-800">Cannot proceed with status change</h3>
+              <div className="mt-2 text-sm text-red-700 whitespace-pre-line">
+                {validationError}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showConfirm && targetStatus && (
         <div className="border border-gray-300 rounded-lg p-4 bg-white shadow-lg">
