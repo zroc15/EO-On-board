@@ -255,15 +255,19 @@ export default function OnboardingForm() {
     { id: 'commercial', name: 'Scope', required: true },
     { id: 'technical', name: 'Technical Environment', required: true },
     { id: 'administrative', name: 'Administrative', required: true },
-    { id: 'complexity', name: 'Complexity', required: true },
+    { id: 'complexity', name: 'Complexity', required: false },  // Only for leadership
     { id: 'engineer', name: 'Engineer Assignment', required: false },
     { id: 'notes', name: 'Notes', required: false }
   ];
 
-  // Filter tabs based on permissions - hide Engineer Assignment for non-leaders
-  const tabs = canAssign
-    ? allTabs
-    : allTabs.filter(tab => tab.id !== 'engineer');
+  // Filter tabs based on permissions
+  // - Hide Engineer Assignment for non-leaders
+  // - Hide Complexity for non-leaders (leaders assign during review)
+  const tabs = allTabs.filter(tab => {
+    if (tab.id === 'engineer' && !canAssign) return false;
+    if (tab.id === 'complexity' && !canAssign) return false;
+    return true;
+  });
 
   return (
     <div className="px-4 sm:px-6 lg:px-8">

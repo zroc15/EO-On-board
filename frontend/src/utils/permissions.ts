@@ -147,11 +147,22 @@ export const canTransitionToStatus = (
     return { allowed: true };
   }
 
-  // SA Complete -> Leadership Approved: Only leaders
+  // SA Complete -> Leadership Approved: Only leaders, requires complexity and engineer
   if (currentStatus === 'sa_complete' && targetStatus === 'leadership_approved') {
     if (!isLeadership(user.role)) {
       return { allowed: false, reason: 'Only Leadership can approve records' };
     }
+
+    // Check if complexity is assigned
+    if (!record.complexity_level) {
+      return { allowed: false, reason: 'Please assign a Complexity Level before approving' };
+    }
+
+    // Check if at least a primary engineer is assigned
+    if (!record.engineer_assignments || record.engineer_assignments.length === 0) {
+      return { allowed: false, reason: 'Please assign at least a Primary Engineer before approving' };
+    }
+
     return { allowed: true };
   }
 

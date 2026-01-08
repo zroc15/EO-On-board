@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { storageService } from '../services/localStorage';
 import { OnboardingRecord, STATUS_LABELS, STATUS_COLORS } from '../types';
-import { filterRecordsByRole, isLeadership, canCreateCustomer } from '../utils/permissions';
+import { filterRecordsByRole, isLeadership, canCreateCustomer, isEngineer } from '../utils/permissions';
 
 export default function Dashboard() {
   const [records, setRecords] = useState<OnboardingRecord[]>([]);
@@ -47,6 +47,7 @@ export default function Dashboard() {
   const awaitingReview = filteredAllRecords.filter(r => r.status === 'sa_complete');
   const showLeadershipTabs = currentUser && isLeadership(currentUser.role);
   const canCreate = canCreateCustomer(currentUser);
+  const isEngineerRole = currentUser && isEngineer(currentUser.role);
 
   // Determine which records to display based on active tab
   const displayRecords = activeTab === 'review' ? awaitingReview : records;
@@ -56,9 +57,13 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Customer Onboarding</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">
+            {isEngineerRole ? 'My Projects' : 'Customer Onboarding'}
+          </h1>
           <p className="text-primary-200">
-            Manage customer onboarding records from sales handoff to deployment
+            {isEngineerRole
+              ? 'View and manage your assigned deployment projects'
+              : 'Manage customer onboarding records from sales handoff to deployment'}
           </p>
         </div>
         {canCreate && (
