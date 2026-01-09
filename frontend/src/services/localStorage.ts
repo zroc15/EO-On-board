@@ -20,11 +20,29 @@ const STORAGE_KEYS = {
   ENGINEERS: 'eliteops_engineers',
   USERS: 'eliteops_users',
   CURRENT_USER: 'eliteops_current_user',
-  NOTIFICATIONS: 'eliteops_notifications'
+  NOTIFICATIONS: 'eliteops_notifications',
+  DATA_VERSION: 'eliteops_data_version'
 };
+
+// Current data version - increment when schema changes
+const CURRENT_DATA_VERSION = 2;
 
 // Initialize with sample data if empty
 const initializeData = () => {
+  // Check data version and reset if outdated
+  const storedVersion = localStorage.getItem(STORAGE_KEYS.DATA_VERSION);
+  const currentVersion = String(CURRENT_DATA_VERSION);
+
+  if (storedVersion !== currentVersion) {
+    // Data version mismatch - clear old data and reinitialize
+    console.log(`Data version mismatch (stored: ${storedVersion}, current: ${currentVersion}). Reinitializing...`);
+    localStorage.removeItem(STORAGE_KEYS.ONBOARDING_RECORDS);
+    localStorage.removeItem(STORAGE_KEYS.ENGINEERS);
+    localStorage.removeItem(STORAGE_KEYS.USERS);
+    // Don't clear CURRENT_USER so user stays logged in
+    localStorage.setItem(STORAGE_KEYS.DATA_VERSION, currentVersion);
+  }
+
   // Initialize users
   if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
     const initialUsers: User[] = [
@@ -90,27 +108,114 @@ const initializeData = () => {
   // Initialize onboarding records
   if (!localStorage.getItem(STORAGE_KEYS.ONBOARDING_RECORDS)) {
     const initialRecords: OnboardingRecord[] = [
+      // Draft - Sales is still working on it
       {
         id: generateId(),
         customer_name: 'Acme Corporation',
         salesforce_opportunity_id: 'OPP-12345',
         status: 'draft',
         complexity_level: undefined,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        created_by_email: 'jessica.sa@eliteops.com',
+        created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+        updated_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
         is_locked: false
       },
+      // Awaiting Review - Ready for leadership to assign
       {
         id: generateId(),
         customer_name: 'TechStart Industries',
         salesforce_opportunity_id: 'OPP-12346',
         status: 'sa_complete',
         complexity_level: 'L2',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        created_by_email: 'jessica.sa@eliteops.com',
+        stakeholders: {
+          eliteops_solutions_architect: 'Jessica Anderson',
+          customer_primary_name: 'Tom Wilson',
+          customer_primary_email: 'tom.wilson@techstart.com',
+          customer_secondary_name: 'Sarah Johnson',
+          customer_secondary_email: 'sarah.johnson@techstart.com'
+        },
+        commercial_scope: {
+          products_sold: ['ZIA Deployment', 'ZPA Deployment'],
+          deployment_type: 'Greenfield',
+          sow_file_name: 'TechStart_SOW.pdf'
+        },
+        created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+        updated_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
         is_locked: false
+      },
+      // Ready for Delivery - Assigned to engineer
+      {
+        id: generateId(),
+        customer_name: 'Global Enterprises',
+        salesforce_opportunity_id: 'OPP-12347',
+        status: 'leadership_approved',
+        complexity_level: 'L3',
+        created_by_email: 'david.rep@eliteops.com',
+        stakeholders: {
+          eliteops_solutions_architect: 'David Martinez',
+          customer_primary_name: 'Jennifer Lee',
+          customer_primary_email: 'jennifer.lee@globalent.com'
+        },
+        commercial_scope: {
+          products_sold: ['ZIA Deployment', 'DLP', 'ZCC'],
+          deployment_type: 'Optimize',
+          sow_file_name: 'GlobalEnt_SOW.pdf'
+        },
+        engineer_assignments: [
+          {
+            id: generateId(),
+            onboarding_id: '', // Will be set below
+            engineer_id: '', // Will be set to Emily's ID
+            engineer_name: 'Emily Davis',
+            engineer_email: 'emily.davis@eliteops.com',
+            role: 'primary',
+            assigned_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() // 2 hours ago
+          }
+        ],
+        created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+        updated_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+        is_locked: true
+      },
+      // Another one ready for delivery
+      {
+        id: generateId(),
+        customer_name: 'Innovative Solutions Ltd',
+        salesforce_opportunity_id: 'OPP-12348',
+        status: 'leadership_approved',
+        complexity_level: 'L4',
+        created_by_email: 'jessica.sa@eliteops.com',
+        stakeholders: {
+          eliteops_solutions_architect: 'Jessica Anderson',
+          customer_primary_name: 'Robert Chen',
+          customer_primary_email: 'robert.chen@innovative.com'
+        },
+        commercial_scope: {
+          products_sold: ['ZIA Deployment', 'ZPA Deployment', 'DLP', 'ZTB'],
+          deployment_type: 'ProServ',
+          sow_file_name: 'Innovative_SOW.pdf'
+        },
+        engineer_assignments: [
+          {
+            id: generateId(),
+            onboarding_id: '', // Will be set below
+            engineer_id: '', // Will be set to John's ID
+            engineer_name: 'John Smith',
+            engineer_email: 'john.smith@eliteops.com',
+            role: 'primary',
+            assigned_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() // 1 day ago
+          }
+        ],
+        created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days ago
+        updated_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+        is_locked: true
       }
     ];
+
+    // Set onboarding_id for engineer assignments
+    initialRecords[2].engineer_assignments![0].onboarding_id = initialRecords[2].id;
+    initialRecords[3].engineer_assignments![0].onboarding_id = initialRecords[3].id;
+
     localStorage.setItem(STORAGE_KEYS.ONBOARDING_RECORDS, JSON.stringify(initialRecords));
   }
 };
