@@ -7,7 +7,8 @@ import {
   Engineer,
   ComplexityLevel,
   OnboardingStatus,
-  User
+  User,
+  UserRole
 } from '../types';
 
 // Generate UUID
@@ -379,9 +380,54 @@ export const storageService = {
 
   // Engineers
   getAllEngineers(filters?: { available?: boolean; min_complexity?: ComplexityLevel }): Engineer[] {
-    const engineersJson = localStorage.getItem(STORAGE_KEYS.ENGINEERS);
-    let engineers: Engineer[] = engineersJson ? JSON.parse(engineersJson) : [];
+    // Get all users from USERS storage
+    const users = this.getAllUsers();
 
+    // Filter for active users with engineering roles
+    const engineeringRoles: UserRole[] = ['lead_solutions_engineer', 'solutions_engineer', 'delivery_engineer'];
+    const engineerUsers = users.filter(u => u.is_active && engineeringRoles.includes(u.role));
+
+    // Get existing engineer profiles from ENGINEERS storage
+    const engineersJson = localStorage.getItem(STORAGE_KEYS.ENGINEERS);
+    const existingEngineers: Engineer[] = engineersJson ? JSON.parse(engineersJson) : [];
+
+    // Build engineer list by merging Users data with Engineer profiles
+    let engineers: Engineer[] = engineerUsers.map(user => {
+      // Check if this user has an engineer profile
+      const existingProfile = existingEngineers.find(e => e.email === user.email);
+
+      if (existingProfile) {
+        // Use existing profile, but update name/email from Users in case it changed
+        return {
+          ...existingProfile,
+          name: user.name,
+          email: user.email
+        };
+      } else {
+        // Create default engineer profile for this user
+        // Default complexity based on role
+        const defaultComplexity: Record<string, ComplexityLevel> = {
+          'lead_solutions_engineer': 'L4',
+          'solutions_engineer': 'L3',
+          'delivery_engineer': 'L2'
+        };
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          skills: [], // Empty skills array for new engineers
+          max_complexity_level: defaultComplexity[user.role] || 'L2',
+          is_available: true,
+          primary_timezone: 'America/New_York',
+          current_projects_count: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+      }
+    });
+
+    // Apply filters
     if (filters?.available !== undefined) {
       engineers = engineers.filter(e => e.is_available === filters.available);
     }
