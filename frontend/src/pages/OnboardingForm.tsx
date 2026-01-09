@@ -375,8 +375,8 @@ export default function OnboardingForm() {
         {activeTab === 'notes' && currentUser && (
           <EngineerNotes
             onboardingId={record.id}
-            currentUserEmail={currentUser.email}
-            currentUserName={currentUser.name}
+            currentUser={currentUser}
+            record={record}
           />
         )}
       </div>

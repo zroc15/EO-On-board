@@ -20,7 +20,7 @@ export const canEditRecord = (user: User | null, recordStatus: OnboardingStatus,
   // Leaders can always edit
   if (isLeadership(user.role)) return true;
 
-  // ONLY SALES can edit THEIR OWN drafts (engineers cannot edit!)
+  // ONLY SALES can edit THEIR OWN drafts
   if (isSales(user.role) && recordStatus === 'draft') {
     // If created_by_email is set, only allow editing if it matches current user
     if (createdByEmail) {
@@ -30,7 +30,30 @@ export const canEditRecord = (user: User | null, recordStatus: OnboardingStatus,
     return true;
   }
 
-  // Engineers cannot edit records at all
+  // Engineers cannot edit form fields
+  return false;
+};
+
+// New permission: Engineers can add notes to their assigned projects
+export const canAddNotes = (user: User | null, record: any): boolean => {
+  if (!user) return false;
+
+  // Leaders can always add notes
+  if (isLeadership(user.role)) return true;
+
+  // Sales cannot add notes (they edit the form)
+  if (isSales(user.role)) return false;
+
+  // Engineers can add notes ONLY to projects assigned to them
+  if (isEngineer(user.role)) {
+    if (!record.engineer_assignments || record.engineer_assignments.length === 0) {
+      return false;
+    }
+    return record.engineer_assignments.some((assignment: any) =>
+      assignment.engineer_email === user.email
+    );
+  }
+
   return false;
 };
 

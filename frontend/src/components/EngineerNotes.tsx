@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { storageService } from '../services/localStorage';
+import { canAddNotes } from '../utils/permissions';
+import { OnboardingRecord, User } from '../types';
 
 interface Note {
   id: string;
@@ -12,14 +14,17 @@ interface Note {
 
 interface Props {
   onboardingId: string;
-  currentUserEmail: string;
-  currentUserName: string;
+  currentUser: User;
+  record: OnboardingRecord;
 }
 
-export default function EngineerNotes({ onboardingId, currentUserEmail, currentUserName }: Props) {
+export default function EngineerNotes({ onboardingId, currentUser, record }: Props) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNote, setNewNote] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Check if current user can add notes
+  const canAddNote = canAddNotes(currentUser, record);
 
   useEffect(() => {
     loadNotes();
@@ -40,8 +45,8 @@ export default function EngineerNotes({ onboardingId, currentUserEmail, currentU
       const note: Note = {
         id: crypto.randomUUID(),
         onboarding_id: onboardingId,
-        engineer_name: currentUserName,
-        engineer_email: currentUserEmail,
+        engineer_name: currentUser.name,
+        engineer_email: currentUser.email,
         note: newNote.trim(),
         created_at: new Date().toISOString()
       };
@@ -68,11 +73,14 @@ export default function EngineerNotes({ onboardingId, currentUserEmail, currentU
       <div className="glass-card rounded-2xl p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Engineer Notes</h2>
         <p className="text-sm text-gray-600 mb-6">
-          Add notes about this deployment. These notes are visible to all team members and cannot be deleted.
+          {canAddNote
+            ? 'Add notes about this deployment. These notes are visible to all team members and cannot be deleted.'
+            : 'View notes about this deployment. Only assigned engineers and leadership can add notes.'}
         </p>
 
-        {/* Add Note Form */}
-        <form onSubmit={handleAddNote} className="mb-6">
+        {/* Add Note Form - Only show if user has permission */}
+        {canAddNote && (
+          <form onSubmit={handleAddNote} className="mb-6">
           <label htmlFor="new-note" className="block text-sm font-medium text-gray-700 mb-2">
             Add a new note
           </label>
@@ -94,6 +102,7 @@ export default function EngineerNotes({ onboardingId, currentUserEmail, currentU
             </button>
           </div>
         </form>
+        )}
 
         {/* Notes List */}
         <div className="space-y-4">

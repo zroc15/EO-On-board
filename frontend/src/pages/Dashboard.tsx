@@ -8,7 +8,8 @@ export default function Dashboard() {
   const [records, setRecords] = useState<OnboardingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'all' | 'review'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'review'>('review'); // Default to Unassigned for leaders
+  const [engineerTab, setEngineerTab] = useState<'my' | 'all'>('my'); // Default to My Projects for engineers
 
   const currentUser = storageService.getCurrentUser();
 
@@ -52,13 +53,25 @@ export default function Dashboard() {
         total: filteredAllRecords.length
       };
 
-  // Records awaiting review (leadership only)
-  const awaitingReview = filteredAllRecords.filter(r => r.status === 'sa_complete');
+  // Records for leadership tabs
+  const unassignedProjects = filteredAllRecords.filter(r => r.status === 'sa_complete'); // Awaiting review
+  const assignedProjects = filteredAllRecords.filter(r => r.status === 'leadership_approved'); // Assigned
   const showLeadershipTabs = currentUser && isLeadership(currentUser.role);
   const canCreate = canCreateCustomer(currentUser);
 
+  // Records for engineer tabs
+  const myProjects = isEngineerRole ? filteredAllRecords : []; // Already filtered by assignment
+  const allProjectsForEngineer = isEngineerRole
+    ? storageService.getAllOnboarding().filter(r => r.status === 'leadership_approved')
+    : [];
+
   // Determine which records to display based on active tab
-  const displayRecords = activeTab === 'review' ? awaitingReview : records;
+  let displayRecords = records;
+  if (showLeadershipTabs) {
+    displayRecords = activeTab === 'review' ? unassignedProjects : assignedProjects;
+  } else if (isEngineerRole) {
+    displayRecords = engineerTab === 'my' ? myProjects : allProjectsForEngineer;
+  }
 
   return (
     <div className="space-y-8">
@@ -182,19 +195,6 @@ export default function Dashboard() {
           <div className="mb-6 border-b-2 border-primary-100">
             <nav className="-mb-0.5 flex space-x-6">
               <button
-                onClick={() => setActiveTab('all')}
-                className={`relative py-3 px-1 font-semibold text-sm transition-all duration-300 ${
-                  activeTab === 'all'
-                    ? 'text-primary-600 border-b-2 border-primary-600'
-                    : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent'
-                }`}
-              >
-                All Projects
-                {activeTab === 'all' && (
-                  <span className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-primary-500 to-primary-600 shadow-glow"></span>
-                )}
-              </button>
-              <button
                 onClick={() => setActiveTab('review')}
                 className={`relative py-3 px-1 font-semibold text-sm transition-all duration-300 flex items-center ${
                   activeTab === 'review'
@@ -202,13 +202,75 @@ export default function Dashboard() {
                     : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent'
                 }`}
               >
-                Waiting for Review
-                {awaitingReview.length > 0 && (
+                Unassigned Projects
+                {unassignedProjects.length > 0 && (
                   <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-full animate-pulse">
-                    {awaitingReview.length}
+                    {unassignedProjects.length}
                   </span>
                 )}
                 {activeTab === 'review' && (
+                  <span className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-primary-500 to-primary-600 shadow-glow"></span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('all')}
+                className={`relative py-3 px-1 font-semibold text-sm transition-all duration-300 ${
+                  activeTab === 'all'
+                    ? 'text-primary-600 border-b-2 border-primary-600'
+                    : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent'
+                }`}
+              >
+                Assigned Projects
+                {assignedProjects.length > 0 && (
+                  <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-green-600 bg-green-100 rounded-full">
+                    {assignedProjects.length}
+                  </span>
+                )}
+                {activeTab === 'all' && (
+                  <span className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-primary-500 to-primary-600 shadow-glow"></span>
+                )}
+              </button>
+            </nav>
+          </div>
+        )}
+
+        {/* Engineer Tabs */}
+        {isEngineerRole && (
+          <div className="mb-6 border-b-2 border-primary-100">
+            <nav className="-mb-0.5 flex space-x-6">
+              <button
+                onClick={() => setEngineerTab('my')}
+                className={`relative py-3 px-1 font-semibold text-sm transition-all duration-300 flex items-center ${
+                  engineerTab === 'my'
+                    ? 'text-primary-600 border-b-2 border-primary-600'
+                    : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent'
+                }`}
+              >
+                My Projects
+                {myProjects.length > 0 && (
+                  <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-primary-600 bg-primary-100 rounded-full">
+                    {myProjects.length}
+                  </span>
+                )}
+                {engineerTab === 'my' && (
+                  <span className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-primary-500 to-primary-600 shadow-glow"></span>
+                )}
+              </button>
+              <button
+                onClick={() => setEngineerTab('all')}
+                className={`relative py-3 px-1 font-semibold text-sm transition-all duration-300 ${
+                  engineerTab === 'all'
+                    ? 'text-primary-600 border-b-2 border-primary-600'
+                    : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent'
+                }`}
+              >
+                All Projects
+                {allProjectsForEngineer.length > 0 && (
+                  <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-gray-600 bg-gray-100 rounded-full">
+                    {allProjectsForEngineer.length}
+                  </span>
+                )}
+                {engineerTab === 'all' && (
                   <span className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-primary-500 to-primary-600 shadow-glow"></span>
                 )}
               </button>
@@ -218,9 +280,17 @@ export default function Dashboard() {
 
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-900">
-            {activeTab === 'review' ? 'Awaiting Your Review' : 'All Projects'}
+            {showLeadershipTabs
+              ? activeTab === 'review'
+                ? 'Unassigned Projects (Awaiting Review)'
+                : 'Assigned Projects'
+              : isEngineerRole
+              ? engineerTab === 'my'
+                ? 'My Assigned Projects'
+                : 'All Projects'
+              : 'All Projects'}
           </h2>
-          {activeTab === 'all' && (
+          {!showLeadershipTabs && !isEngineerRole && (
             <div className="flex items-center space-x-3">
               <label className="text-sm font-medium text-gray-700">Filter:</label>
               <select
@@ -249,11 +319,17 @@ export default function Dashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <p className="mt-4 text-gray-500">
-                {activeTab === 'review'
-                  ? 'No records awaiting review.'
+                {showLeadershipTabs
+                  ? activeTab === 'review'
+                    ? 'No unassigned projects awaiting review.'
+                    : 'No assigned projects yet.'
+                  : isEngineerRole
+                  ? engineerTab === 'my'
+                    ? 'No projects assigned to you yet.'
+                    : 'No projects available.'
                   : 'No onboarding records found.'}
               </p>
-              {activeTab === 'all' && (
+              {canCreate && !showLeadershipTabs && !isEngineerRole && (
                 <Link
                   to="/onboarding/new"
                   className="mt-4 inline-block text-primary-600 hover:text-primary-700 font-medium"
