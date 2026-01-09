@@ -73,8 +73,7 @@ export default function LeadershipDashboard() {
         storageService.assignEngineer(selectedRecord.id, selectedSecondaryEngineer, 'secondary');
       }
 
-      // Update status to ready for delivery
-      storageService.updateOnboardingStatus(selectedRecord.id, 'ready_for_delivery');
+      // Engineer assignment is done during leadership approval, no need to update status again
 
       // Reset and reload
       setSelectedRecord(null);

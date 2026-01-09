@@ -180,11 +180,13 @@ export const storageService = {
 
   createOnboarding(data: { customer_name: string; salesforce_opportunity_id?: string }): OnboardingRecord {
     const records = this.getAllOnboarding();
+    const currentUser = this.getCurrentUser();
     const newRecord: OnboardingRecord = {
       id: generateId(),
       customer_name: data.customer_name,
       salesforce_opportunity_id: data.salesforce_opportunity_id,
       status: 'draft',
+      created_by_email: currentUser?.email,  // Track who created this
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       is_locked: false
@@ -236,13 +238,11 @@ export const storageService = {
       status,
       updated_at: new Date().toISOString(),
       ...(status === 'sa_complete' && { submitted_at: new Date().toISOString() }),
-      ...(status === 'leadership_approved' && { approved_at: new Date().toISOString() }),
-      ...(status === 'ready_for_delivery' && {
+      ...(status === 'leadership_approved' && {
+        approved_at: new Date().toISOString(),
         is_locked: true,
         locked_at: new Date().toISOString()
-      }),
-      ...(status === 'in_deployment' && { deployment_started_at: new Date().toISOString() }),
-      ...(status === 'completed' && { completed_at: new Date().toISOString() })
+      })
     };
 
     localStorage.setItem(STORAGE_KEYS.ONBOARDING_RECORDS, JSON.stringify(records));

@@ -33,21 +33,29 @@ export default function Dashboard() {
     }
   };
 
-  // Calculate stats
+  // Calculate stats based on role
   const allRecords = storageService.getAllOnboarding();
   const filteredAllRecords = filterRecordsByRole(allRecords, currentUser);
-  const stats = {
-    total: filteredAllRecords.length,
-    pending: filteredAllRecords.filter(r => r.status === 'sa_complete').length,
-    inProgress: filteredAllRecords.filter(r => ['leadership_approved', 'ready_for_delivery', 'in_deployment'].includes(r.status)).length,
-    completed: filteredAllRecords.filter(r => r.status === 'completed').length
-  };
+  const isEngineerRole = currentUser && isEngineer(currentUser.role);
+  const isLeader = currentUser && isLeadership(currentUser.role);
+
+  // Different stats for different roles
+  const stats = isEngineerRole
+    ? null  // Engineers don't see stats, only their projects
+    : isLeader
+    ? {
+        total: filteredAllRecords.length,
+        pending: filteredAllRecords.filter(r => r.status === 'sa_complete').length
+      }
+    : {
+        // Sales only see total projects
+        total: filteredAllRecords.length
+      };
 
   // Records awaiting review (leadership only)
   const awaitingReview = filteredAllRecords.filter(r => r.status === 'sa_complete');
   const showLeadershipTabs = currentUser && isLeadership(currentUser.role);
   const canCreate = canCreateCustomer(currentUser);
-  const isEngineerRole = currentUser && isEngineer(currentUser.role);
 
   // Determine which records to display based on active tab
   const displayRecords = activeTab === 'review' ? awaitingReview : records;
@@ -86,104 +94,86 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Total Projects */}
+      {/* Stats Cards - Only show for leaders and sales, not engineers */}
+      {stats && (
+        <div className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${isLeader ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>
+          {/* Total Projects - shown to leaders and sales */}
+          <div className="stat-card group p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600 mb-1">Total Projects</p>
+                <p className="text-4xl font-bold text-gray-900 mb-2">{stats.total}</p>
+                <div className="flex items-center text-xs text-primary-600">
+                  <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                  <span className="font-medium">All time</span>
+                </div>
+              </div>
+              <div className="relative">
+                <div className="absolute inset-0 bg-gray-400/20 blur-xl rounded-full group-hover:bg-gray-500/30 transition-all"></div>
+                <div className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
+                  <svg className="h-8 w-8 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Pending Review - only for leaders */}
+          {isLeader && 'pending' in stats && (
+            <div className="stat-card group p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-600 mb-1">Pending Review</p>
+                  <p className="text-4xl font-bold text-gray-900 mb-2">{stats.pending}</p>
+                  <div className="flex items-center text-xs text-yellow-600">
+                    <svg className="h-4 w-4 mr-1 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="font-medium">Awaiting action</span>
+                  </div>
+                </div>
+                <div className="relative">
+                  <div className="absolute inset-0 bg-yellow-400/20 blur-xl rounded-full group-hover:bg-yellow-500/30 transition-all"></div>
+                  <div className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-yellow-100 to-yellow-200 flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+                    <svg className="h-8 w-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Engineers see no stats, go directly to their projects */}
+      {isEngineerRole && (
         <div className="stat-card group p-6">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-600 mb-1">Total Projects</p>
-              <p className="text-4xl font-bold text-gray-900 mb-2">{stats.total}</p>
+              <p className="text-sm font-medium text-gray-600 mb-1">My Assigned Projects</p>
+              <p className="text-4xl font-bold text-gray-900 mb-2">{filteredAllRecords.length}</p>
               <div className="flex items-center text-xs text-primary-600">
                 <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
-                <span className="font-medium">All time</span>
+                <span className="font-medium">Active assignments</span>
               </div>
             </div>
             <div className="relative">
-              <div className="absolute inset-0 bg-gray-400/20 blur-xl rounded-full group-hover:bg-gray-500/30 transition-all"></div>
-              <div className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
-                <svg className="h-8 w-8 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <div className="absolute inset-0 bg-primary-400/20 blur-xl rounded-full group-hover:bg-primary-500/30 transition-all"></div>
+              <div className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
+                <svg className="h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
               </div>
             </div>
           </div>
         </div>
-
-        {/* Pending Review */}
-        <div className="stat-card group p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-600 mb-1">Pending Review</p>
-              <p className="text-4xl font-bold text-gray-900 mb-2">{stats.pending}</p>
-              <div className="flex items-center text-xs text-yellow-600">
-                <svg className="h-4 w-4 mr-1 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="font-medium">Awaiting action</span>
-              </div>
-            </div>
-            <div className="relative">
-              <div className="absolute inset-0 bg-yellow-400/20 blur-xl rounded-full group-hover:bg-yellow-500/30 transition-all"></div>
-              <div className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-yellow-100 to-yellow-200 flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
-                <svg className="h-8 w-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* In Progress */}
-        <div className="stat-card group p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-600 mb-1">In Progress</p>
-              <p className="text-4xl font-bold text-gray-900 mb-2">{stats.inProgress}</p>
-              <div className="flex items-center text-xs text-blue-600">
-                <svg className="h-4 w-4 mr-1 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <span className="font-medium">Active deployment</span>
-              </div>
-            </div>
-            <div className="relative">
-              <div className="absolute inset-0 bg-blue-400/20 blur-xl rounded-full group-hover:bg-blue-500/30 transition-all"></div>
-              <div className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center transform group-hover:scale-110 group-hover:-rotate-6 transition-all duration-300">
-                <svg className="h-8 w-8 text-blue-600 animate-pulse-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Completed */}
-        <div className="stat-card group p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-600 mb-1">Completed</p>
-              <p className="text-4xl font-bold text-gray-900 mb-2">{stats.completed}</p>
-              <div className="flex items-center text-xs text-green-600">
-                <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="font-medium">Successfully deployed</span>
-              </div>
-            </div>
-            <div className="relative">
-              <div className="absolute inset-0 bg-green-400/20 blur-xl rounded-full group-hover:bg-green-500/30 transition-all"></div>
-              <div className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
-                <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Filter & Table */}
       <div className="glass-card rounded-2xl p-6">
@@ -240,11 +230,8 @@ export default function Dashboard() {
               >
                 <option value="">All Statuses</option>
                 <option value="draft">Draft</option>
-                <option value="sa_complete">SA Complete</option>
-                <option value="leadership_approved">Leadership Approved</option>
-                <option value="ready_for_delivery">Ready for Delivery</option>
-                <option value="in_deployment">In Deployment</option>
-                <option value="completed">Completed</option>
+                <option value="sa_complete">Awaiting Review</option>
+                <option value="leadership_approved">Ready for Delivery</option>
               </select>
             </div>
           )}

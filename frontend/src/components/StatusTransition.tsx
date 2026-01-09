@@ -16,13 +16,11 @@ export default function StatusTransition({ currentStatus, onStatusChange, disabl
   const [targetStatus, setTargetStatus] = useState<OnboardingStatus | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  // Simplified 3-status workflow transitions
   const validTransitions: Record<OnboardingStatus, OnboardingStatus[]> = {
-    draft: ['sa_complete'],
-    sa_complete: ['leadership_approved', 'draft'],
-    leadership_approved: ['ready_for_delivery', 'sa_complete'],
-    ready_for_delivery: ['in_deployment', 'leadership_approved'],
-    in_deployment: ['completed'],
-    completed: []
+    draft: ['sa_complete'],                           // Draft → Awaiting Review
+    sa_complete: ['leadership_approved', 'draft'],    // Awaiting Review → Ready for Delivery or back to Draft
+    leadership_approved: ['sa_complete']              // Ready for Delivery → back to Awaiting Review
   };
 
   const availableTransitions = validTransitions[currentStatus] || [];
@@ -59,11 +57,8 @@ export default function StatusTransition({ currentStatus, onStatusChange, disabl
   const getStatusDescription = (status: OnboardingStatus): string => {
     const descriptions: Record<OnboardingStatus, string> = {
       draft: 'Initial data entry and information gathering',
-      sa_complete: 'Solutions Architect has reviewed and approved technical details',
-      leadership_approved: 'Leadership has approved scope, resourcing, and SOW',
-      ready_for_delivery: 'Record locked, engineer assigned, ready for deployment',
-      in_deployment: 'Active deployment in progress',
-      completed: 'Deployment finished and handed off'
+      sa_complete: 'Awaiting leadership review for complexity and engineer assignment',
+      leadership_approved: 'Ready for delivery - engineer assigned and deployment can begin'
     };
     return descriptions[status];
   };
@@ -77,17 +72,10 @@ export default function StatusTransition({ currentStatus, onStatusChange, disabl
         'Administrative details completed'
       ],
       leadership_approved: [
-        'SOW created and approved',
         'Complexity level set',
-        'Products and scope finalized'
-      ],
-      ready_for_delivery: [
         'Primary engineer assigned',
-        'All required fields completed',
-        'Record will be locked'
-      ],
-      in_deployment: ['Deployment started'],
-      completed: ['All deployment tasks finished']
+        'SOW created and approved'
+      ]
     };
     return requirements[status] || [];
   };

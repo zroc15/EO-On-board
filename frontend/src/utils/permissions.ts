@@ -14,14 +14,21 @@ export const isEngineer = (role: UserRole): boolean => {
 };
 
 // Permission checks
-export const canEditRecord = (user: User | null, recordStatus: OnboardingStatus): boolean => {
+export const canEditRecord = (user: User | null, recordStatus: OnboardingStatus, createdByEmail?: string): boolean => {
   if (!user) return false;
 
   // Leaders can always edit
   if (isLeadership(user.role)) return true;
 
-  // ONLY SALES can edit in draft status (engineers cannot edit!)
-  if (isSales(user.role) && recordStatus === 'draft') return true;
+  // ONLY SALES can edit THEIR OWN drafts (engineers cannot edit!)
+  if (isSales(user.role) && recordStatus === 'draft') {
+    // If created_by_email is set, only allow editing if it matches current user
+    if (createdByEmail) {
+      return createdByEmail === user.email;
+    }
+    // If created_by_email not set (legacy data), allow editing
+    return true;
+  }
 
   // Engineers cannot edit records at all
   return false;
@@ -130,7 +137,7 @@ export const canTransitionToStatus = (
 ): { allowed: boolean; reason?: string } => {
   if (!user) return { allowed: false, reason: 'No user logged in' };
 
-  // Draft -> SA Complete: Only Sales can do this if all fields are complete
+  // Draft -> Awaiting Review (sa_complete): Only Sales can do this if all fields are complete
   if (currentStatus === 'draft' && targetStatus === 'sa_complete') {
     if (!canSubmitToLeadership(user)) {
       return { allowed: false, reason: 'Only Sales can submit to leadership' };
@@ -147,7 +154,7 @@ export const canTransitionToStatus = (
     return { allowed: true };
   }
 
-  // SA Complete -> Leadership Approved: Only leaders, requires complexity and engineer
+  // Awaiting Review -> Ready for Delivery (leadership_approved): Only leaders, requires complexity and engineer
   if (currentStatus === 'sa_complete' && targetStatus === 'leadership_approved') {
     if (!isLeadership(user.role)) {
       return { allowed: false, reason: 'Only Leadership can approve records' };
@@ -166,51 +173,18 @@ export const canTransitionToStatus = (
     return { allowed: true };
   }
 
-  // Leadership Approved -> Ready for Delivery: Only leaders (after assigning engineers)
-  if (currentStatus === 'leadership_approved' && targetStatus === 'ready_for_delivery') {
-    if (!isLeadership(user.role)) {
-      return { allowed: false, reason: 'Only Leadership can move to Ready for Delivery' };
-    }
-
-    if (!record.engineer_assignments || record.engineer_assignments.length === 0) {
-      return { allowed: false, reason: 'Please assign at least a primary engineer before proceeding' };
-    }
-
-    return { allowed: true };
-  }
-
-  // Ready for Delivery -> In Deployment: Engineers assigned to the project
-  if (currentStatus === 'ready_for_delivery' && targetStatus === 'in_deployment') {
-    if (!isEngineer(user.role)) {
-      return { allowed: false, reason: 'Only assigned Engineers can start deployment' };
-    }
-
-    const isAssigned = record.engineer_assignments?.some((a: any) => a.engineer_email === user.email);
-    if (!isAssigned) {
-      return { allowed: false, reason: 'Only assigned Engineers can start deployment' };
-    }
-
-    return { allowed: true };
-  }
-
-  // In Deployment -> Completed: Assigned engineers
-  if (currentStatus === 'in_deployment' && targetStatus === 'completed') {
-    if (!isEngineer(user.role)) {
-      return { allowed: false, reason: 'Only assigned Engineers can mark as completed' };
-    }
-
-    const isAssigned = record.engineer_assignments?.some((a: any) => a.engineer_email === user.email);
-    if (!isAssigned) {
-      return { allowed: false, reason: 'Only assigned Engineers can mark as completed' };
-    }
-
-    return { allowed: true };
-  }
-
-  // Rejection: SA Complete -> Draft (Leadership only)
+  // Rejection: Awaiting Review -> Draft (Leadership only)
   if (currentStatus === 'sa_complete' && targetStatus === 'draft') {
     if (!isLeadership(user.role)) {
       return { allowed: false, reason: 'Only Leadership can send back to draft' };
+    }
+    return { allowed: true };
+  }
+
+  // Ready for Delivery -> Awaiting Review (Leadership can send back)
+  if (currentStatus === 'leadership_approved' && targetStatus === 'sa_complete') {
+    if (!isLeadership(user.role)) {
+      return { allowed: false, reason: 'Only Leadership can send back to review' };
     }
     return { allowed: true };
   }

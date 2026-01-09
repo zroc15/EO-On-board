@@ -1,10 +1,8 @@
+// Simplified 3-status workflow
 export type OnboardingStatus =
-  | 'draft'
-  | 'sa_complete'
-  | 'leadership_approved'
-  | 'ready_for_delivery'
-  | 'in_deployment'
-  | 'completed';
+  | 'draft'                    // Sales creating/editing
+  | 'sa_complete'              // Awaiting Review (sent to leadership)
+  | 'leadership_approved';     // Ready for Delivery (assigned to engineer)
 
 export type ComplexityLevel = 'L1' | 'L2' | 'L3' | 'L4';
 
@@ -39,6 +37,7 @@ export interface OnboardingRecord {
   complexity_level?: ComplexityLevel;
   teamwork_project_id?: string;
   is_locked: boolean;
+  created_by_email?: string;  // Track who created this record
   created_at: string;
   updated_at: string;
   stakeholders?: Stakeholders;
@@ -144,18 +143,12 @@ export const SKILL_OPTIONS = [
 
 export const STATUS_LABELS: Record<OnboardingStatus, string> = {
   draft: 'Draft',
-  sa_complete: 'SA Complete',
-  leadership_approved: 'Leadership Approved',
-  ready_for_delivery: 'Ready for Delivery',
-  in_deployment: 'In Deployment',
-  completed: 'Completed'
+  sa_complete: 'Awaiting Review',
+  leadership_approved: 'Ready for Delivery'
 };
 
 export const STATUS_COLORS: Record<OnboardingStatus, string> = {
   draft: 'bg-gray-100 text-gray-800',
   sa_complete: 'bg-blue-100 text-blue-800',
-  leadership_approved: 'bg-purple-100 text-purple-800',
-  ready_for_delivery: 'bg-green-100 text-green-800',
-  in_deployment: 'bg-yellow-100 text-yellow-800',
-  completed: 'bg-emerald-100 text-emerald-800'
+  leadership_approved: 'bg-green-100 text-green-800'
 };

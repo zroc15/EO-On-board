@@ -246,7 +246,7 @@ export default function OnboardingForm() {
   const currentUser = storageService.getCurrentUser();
 
   // Permission checks
-  const canEdit = canEditRecord(currentUser, record.status);
+  const canEdit = canEditRecord(currentUser, record.status, record.created_by_email);
   const canAssign = canAssignEngineers(currentUser);
   const isFormDisabled = !canEdit || record.is_locked || saving;
 
