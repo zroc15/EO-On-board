@@ -16,11 +16,11 @@ export default function StatusTransition({ currentStatus, onStatusChange, disabl
   const [targetStatus, setTargetStatus] = useState<OnboardingStatus | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  // Simplified 3-status workflow transitions
+  // Simplified 3-status workflow transitions (ONE-WAY ONLY)
   const validTransitions: Record<OnboardingStatus, OnboardingStatus[]> = {
-    draft: ['sa_complete'],                           // Draft → Awaiting Review
-    sa_complete: ['leadership_approved', 'draft'],    // Awaiting Review → Ready for Delivery or back to Draft
-    leadership_approved: ['sa_complete']              // Ready for Delivery → back to Awaiting Review
+    draft: ['sa_complete'],                           // Draft → Awaiting Review (sales submits)
+    sa_complete: ['leadership_approved'],             // Awaiting Review → Ready for Delivery (leader assigns & approves)
+    leadership_approved: []                           // Ready for Delivery → NO FURTHER TRANSITIONS
   };
 
   const availableTransitions = validTransitions[currentStatus] || [];

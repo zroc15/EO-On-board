@@ -22,12 +22,12 @@ export const canEditRecord = (user: User | null, recordStatus: OnboardingStatus,
 
   // ONLY SALES can edit THEIR OWN drafts
   if (isSales(user.role) && recordStatus === 'draft') {
-    // If created_by_email is set, only allow editing if it matches current user
-    if (createdByEmail) {
-      return createdByEmail === user.email;
+    // If created_by_email is not set (legacy or new record), allow editing
+    if (!createdByEmail) {
+      return true;
     }
-    // If created_by_email not set (legacy data), allow editing
-    return true;
+    // If created_by_email is set, only allow editing if it matches current user
+    return createdByEmail === user.email;
   }
 
   // Engineers cannot edit form fields
@@ -196,21 +196,6 @@ export const canTransitionToStatus = (
     return { allowed: true };
   }
 
-  // Rejection: Awaiting Review -> Draft (Leadership only)
-  if (currentStatus === 'sa_complete' && targetStatus === 'draft') {
-    if (!isLeadership(user.role)) {
-      return { allowed: false, reason: 'Only Leadership can send back to draft' };
-    }
-    return { allowed: true };
-  }
-
-  // Ready for Delivery -> Awaiting Review (Leadership can send back)
-  if (currentStatus === 'leadership_approved' && targetStatus === 'sa_complete') {
-    if (!isLeadership(user.role)) {
-      return { allowed: false, reason: 'Only Leadership can send back to review' };
-    }
-    return { allowed: true };
-  }
-
-  return { allowed: false, reason: 'Invalid status transition' };
+  // NO BACKWARD TRANSITIONS - workflow is one-way only
+  return { allowed: false, reason: 'Invalid status transition. Workflow is one-way: Draft → Awaiting Review → Ready for Delivery' };
 };
