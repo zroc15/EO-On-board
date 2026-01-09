@@ -54,8 +54,10 @@ export default function OnboardingForm() {
   const handleCreateNew = (customerName: string) => {
     try {
       setSaving(true);
-      const newRecord = storageService.createOnboarding({ customer_name: customerName });
-      navigate(`/onboarding/${newRecord.id}`);
+      storageService.createOnboarding({ customer_name: customerName });
+      // Navigate back to dashboard so user can see the new record and click to edit it
+      alert(`Customer "${customerName}" created successfully! You can now find it in your dashboard.`);
+      navigate('/');
     } catch (error) {
       console.error('Failed to create record:', error);
       alert('Failed to create onboarding record');
